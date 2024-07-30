@@ -53,5 +53,18 @@ it("should remember variable assignment before given function is declarated", ()
 ```
 Run the test case and make sure if fail.
 
-Variable resolution is just like the tree adjustor, it will visit the parsing tree before the intepreter. Let's create a resolver just like the tree adjustor, and it contains all the visitor function for each node 
-in the parsing tree, 
+Variable resolution is changing the code before the code feed into intepreter, for example the code like following:
+```js
+var a = "global";
+func showA() {
+    print(a);
+}
+```
+would change into :
+```js
+var a = "global";
+func showA() {
+    print("global");
+}
+```
+That is we fix the value of a variable if we can make sure its value by analyze its sematic.
