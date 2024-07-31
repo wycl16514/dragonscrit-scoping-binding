@@ -53,18 +53,50 @@ it("should remember variable assignment before given function is declarated", ()
 ```
 Run the test case and make sure if fail.
 
-Variable resolution is changing the code before the code feed into intepreter, for example the code like following:
+Variable resolution is telling interpreter where to get the correct value of given variable, for example the following code:
 ```js
 var a = "global";
-func showA() {
-    print(a);
+{
+    func showA() {
+        print(a);
+    }
+    var a = "local";
+    showA();
 }
 ```
-would change into :
+When interpreter exuected the aboved code, and when it comes to line "print(a);" the resolver will tell interpreter: "you should look at the value of a in the global environment instead of local environment". Therefore we need
+to design resolver to pass such kind of info to interpreter. In order to complete this task, resolver need to visit the parsing tree before interpreter and attach special info to each variable then at later time when interpreter
+visiting the parsing tree, it can use the info left by resolver to referencing the correct value for given variable,the resolving process is like following:
+
+
+![scoping and binding (2)](https://github.com/user-attachments/assets/41d49156-68c6-4a7e-86db-cbd40aadf9b9)
+
+The resolver acts like interpreter, when it visit a node which can create new scope such as block, function body, it will create an environment object like interpreter, the main difference is, it won't excute or evalute nodes,
+it just visit each node in the order of the parsing tree, when it encounter any variable declaration or assignment, it just add that variable to the current environment, when it found varialbe reference, it will search the 
+variable from the current env, if it can't find then it will traverse back to previous env object and if it find one contains the given variable, it will send the index of the given env object to interpreter.
+
+When interpreter visit the same variable, it get the index of the env object and get the value of the varaible from the given env. Notice that the statment "print(a);" is in the body of function, and the resolver will visit the
+body of the function before the node for 'var a = "local"', that means when resolver search the value of "a", the first local env will not have entry for variable a yet, therefore it will traverse back to the global scope and
+find there is an entry for "a", then it will send the index 0 to interpreter.
+
+When interpreter referencing variable "a" in the body of showA, it will get the env index that is 0, then it will look for value of "a" in the global env which is what we want!
+
+
+The resolver only needs to leave its mark on given nodes of the parsing tree, they are:
+
+1, block statement which introduces a new scope
+
+2, a function declaration which is also introduces a new scope
+
+3, variable declaration 
+
+4, variable assignment expression.
+
+
+Other nodes don't do anything special but they need to parsing they children for resolution. The resolver will have the same methods as interpreter and tree adjustor and it will take certain handling for certain nodes, add a new
+file name resolver.js and add the following code:
+
 ```js
-var a = "global";
-func showA() {
-    print("global");
-}
+
 ```
-That is we fix the value of a variable if we can make sure its value by analyze its sematic.
+
