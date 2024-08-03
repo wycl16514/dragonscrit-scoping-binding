@@ -56,11 +56,14 @@ the env for the local block, since the assignment 'var a = "local";' is happend 
 code in its body and find variable "a", but this variable is not defined in the env for the body of showA, and it loops up for the env before which is the env for the local block and find there is a variable with name "a" and 
 content "local", then the interpreter will take it as the value for variable "a", the process is as following:
 
-![scoping and binding](https://github.com/user-attachments/assets/19c0e28f-2f9f-4d53-887d-3aa7df922121)
+![scoping and binding (1)](https://github.com/user-attachments/assets/da4e100a-049d-43cc-a50f-d0bc0326e0d0)
+
 
 The root of the problem is, the env for function body is only created when its called, if we can create env for function body in the parsing order instead of execution order, that is we assign env object to each node in the 
 parsing tree. Each node will attached by a "current env" object, at first the "current env" is the global env, when we vist a block node, we create a new local env and the "current env" switch to this env, when we go out of
-block node, we switch back to previous env.
+block node, we switch back to previous env, the process will be as following:
+
+![scoping and binding](https://github.com/user-attachments/assets/185c9a32-0572-4e80-ad8b-6d9817e406a5)
 
 And we we visit a node with an indentifier, we first seach the content of this node with its attached env, if we can't find a record for the node, then we traverse backward to previous env until we find a record and then we 
 change the env attach to that node to the env that contains the given variable, the process is what we call variable resolution, let's create a file name resolve.js and implement the code as following:
